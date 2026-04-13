@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}订单列表{% endblock %}
+{% block content %}
+<h2 class="mb-4">📋 订单列表</h2>
+
+<form class="row g-3 mb-4" method="get">
+    <div class="col-auto">
+        <input type="text" name="keyword" class="form-control" placeholder="搜索订单号/客户名称/物料代码" value="{{ filters.get('keyword', '') }}">
+    </div>
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">全部状态</option>
+            <option value="normal" {{ 'selected' if filters.get('status') == 'normal' }}>正常</option>
+            <option value="anomaly" {{ 'selected' if filters.get('status') == 'anomaly' }}>异常</option>
+            <option value="completed" {{ 'selected' if filters.get('status') == 'completed' }}>已完结</option>
+            <option value="refunded" {{ 'selected' if filters.get('status') == 'refunded' }}>退单</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">查询</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>销售订单号</th>
+                <th>行项目</th>
+                <th>客户名称</th>
+                <th>客户物料代码</th>
+                <th>法拉外码</th>
+                <th>订单数量</th>
+                <th>已出库</th>
+                <th>未出库</th>
+                <th>客户要求交期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in pagination.items %}
+            <tr>
+                <td><code>{{ order.order_no }}</code></td>
+                <td>{{ order.order_line or '-' }}</td>
+                <td>{{ order.company.name if order.company else '-' }}</td>
+                <td>{{ order.customer_material_code or '-' }}</td>
+                <td>{{ order.falah_code or '-' }}</td>
+                <td>{{ order.order_quantity }}</td>
+                <td>{{ order.shipped_qty or 0 }}</td>
+                <td>{{ order.unshipped_qty or 0 }}</td>
+                <td>{{ order.customer_required_date }}</td>
+                <td><span class="badge bg-{% if order.status == 'normal' %}success{% elif order.status == 'anomaly' %}warning{% elif order.status == 'completed' %}info{% else %}secondary{% endif %}">{{ order.get_status_label() }}</span></td>
+                <td><a href="{{ url_for('order.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">详情</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="11" class="text-center text-muted">暂无订单数据</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}<li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}&status={{ filters.get('status','') }}&keyword={{ filters.get('keyword','') }}">上一页</a></li>{% endif %}
+        {% for p in pagination.iter_pages() %}
+            {% if p %}<li class="page-item {{ 'active' if p == pagination.page }}"><a class="page-link" href="?page={{ p }}&status={{ filters.get('status','') }}&keyword={{ filters.get('keyword','') }}">{{ p }}</a></li>{% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}<li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}&status={{ filters.get('status','') }}&keyword={{ filters.get('keyword','') }}">下一页</a></li>{% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

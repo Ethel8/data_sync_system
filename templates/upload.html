@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}数据导入{% endblock %}
+{% block content %}
+<h2 class="mb-4">📤 数据导入</h2>
+<div class="card" style="max-width:600px">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">表类型 *</label>
+                <select name="table_type" class="form-select" required>
+                    <option value="">请选择</option>
+                    <option value="delivery_schedule">交期表（日更）</option>
+                    <option value="shipment">发货表（日更）</option>
+                    <option value="invoice_factory">开票表1-工厂侧（月更）</option>
+                    <option value="invoice_customer">开票表2-客户侧（月更）</option>
+                    <option value="company">公司明细表（不定期）</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">选择文件 *（.xlsx / .xls）</label>
+                <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+            </div>
+            <button type="submit" class="btn btn-primary">上传导入</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

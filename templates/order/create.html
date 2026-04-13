@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}创建订单{% endblock %}
+{% block content %}
+<h2 class="mb-4">➕ 创建订单</h2>
+<div class="card" style="max-width:600px">
+    <div class="card-body">
+        <p class="text-muted">订单创建通常通过导入交期表自动完成。如需手动创建，请填写以下信息。</p>
+        <form method="post" action="">
+            <div class="mb-3">
+                <label class="form-label">订单编号 *</label>
+                <input type="text" name="order_no" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">公司</label>
+                <select name="company_id" class="form-select">
+                    <option value="">请选择</option>
+                    {% for c in companies %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">产品名称</label>
+                <input type="text" name="product_name" class="form-control">
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">数量</label>
+                    <input type="number" name="quantity" class="form-control" step="any">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">单价</label>
+                    <input type="number" name="unit_price" class="form-control" step="any">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">总金额</label>
+                    <input type="number" name="total_amount" class="form-control" step="any">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">交付日期</label>
+                    <input type="date" name="delivery_date" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">结款到期日</label>
+                    <input type="date" name="payment_due_date" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">创建</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

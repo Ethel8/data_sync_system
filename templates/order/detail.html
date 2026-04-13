@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}订单详情 - {{ order.order_no }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📄 订单详情</h2>
+    <a href="{{ url_for('order.order_list') }}" class="btn btn-outline-secondary">← 返回列表</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong><code>{{ order.order_no }}</code></strong>
+                {% if order.order_line %} / 行项目 {{ order.order_line }}{% endif %}
+                <span class="badge bg-{% if order.status == 'normal' %}success{% elif order.status == 'anomaly' %}warning{% elif order.status == 'completed' %}info{% else %}secondary{% endif %} ms-2">{{ order.get_status_label() }}</span>
+            </div>
+            <div class="card-body">
+                <h6 class="text-muted mb-3">基本信息</h6>
+                <table class="table table-sm mb-4">
+                    <tr><th width="25%">客户名称</th><td>{{ order.company.name if order.company else '-' }}</td></tr>
+                    <tr><th>客户合同号</th><td>{{ order.customer_contract_no or '-' }}</td></tr>
+                    <tr><th>客户物料代码</th><td>{{ order.customer_material_code or '-' }}</td></tr>
+                    <tr><th>法拉外码</th><td>{{ order.falah_code or '-' }}</td></tr>
+                    <tr><th>客户项次</th><td>{{ order.customer_line or '-' }}</td></tr>
+                    <tr><th>SAP下达状态</th><td>{{ order.order_status_sap or '-' }}</td></tr>
+                    <tr><th>行备注</th><td>{{ order.order_line_remark or '-' }}</td></tr>
+                </table>
+
+                <h6 class="text-muted mb-3">数量与交期</h6>
+                <table class="table table-sm mb-4">
+                    <tr><th width="25%">订单数量</th><td>{{ order.order_quantity }}</td></tr>
+                    <tr><th>已出库数量</th><td>{{ order.shipped_qty or 0 }}</td></tr>
+                    <tr><th>未出库数量</th><td>{{ order.unshipped_qty or 0 }}</td></tr>
+                    <tr><th>已入库数量</th><td>{{ order.stocked_qty or 0 }}</td></tr>
+                    <tr><th>未入库数量</th><td>{{ order.unstocked_qty or 0 }}</td></tr>
+                    <tr><th>订单评审交期</th><td>{{ order.review_delivery_date or '-' }}</td></tr>
+                    <tr><th>客户要求交期</th><td>{{ order.customer_required_date or '-' }}</td></tr>
+                    <tr><th>计划应入库日期</th><td>{{ order.planned_inbound_date or '-' }}</td></tr>
+                </table>
+
+                <h6 class="text-muted mb-3">状态信息</h6>
+                <table class="table table-sm">
+                    <tr><th width="25%">状态备注</th><td>{{ order.status_remark or '-' }}</td></tr>
+                    <tr><th>创建时间</th><td>{{ order.created_at }}</td></tr>
+                    <tr><th>最后更新</th><td>{{ order.updated_at }}</td></tr>
+                    <tr><th>完结时间</th><td>{{ order.completed_at or '-' }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">操作</div>
+            <div class="card-body d-grid gap-2">
+                {% if order.status == 'normal' %}
+                <form method="post" action="{{ url_for('order.do_complete', order_id=order.id) }}">
+                    <button class="btn btn-success" onclick="return confirm('确认完结入库？')">✅ 完结入库</button>
+                </form>
+                <form method="post" action="{{ url_for('order.do_anomaly', order_id=order.id) }}">
+                    <button class="btn btn-warning" onclick="return confirm('确认标记异常？')">⚠️ 标记异常</button>
+                </form>
+                <form method="post" action="{{ url_for('order.do_refund', order_id=order.id) }}">
+                    <button class="btn btn-secondary" onclick="return confirm('确认退单？')">❌ 退单</button>
+                </form>
+                {% elif order.status == 'anomaly' %}
+                <form method="post" action="{{ url_for('order.do_complete', order_id=order.id) }}">
+                    <button class="btn btn-success" onclick="return confirm('确认异常修正并完结？')">✅ 修正并完结</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mt-4 mb-3">📝 操作日志</h4>
+<table class="table table-sm">
+    <thead><tr><th>时间</th><th>操作</th><th>变更前</th><th>变更后</th><th>备注</th></tr></thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.created_at }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.old_value or '-' }}</td>
+            <td>{{ log.new_value or '-' }}</td>
+            <td>{{ log.remark or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted text-center">暂无日志</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

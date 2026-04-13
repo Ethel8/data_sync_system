@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}欠款表{% endblock %}
+{% block content %}
+<h2 class="mb-4">⚠️ 欠款表</h2>
+<div class="alert alert-warning">
+    待结款订单 <strong>{{ count }}</strong> 笔，欠款总额 <strong>¥{{ '%.2f'|format(total_arrears) }}</strong>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr><th>订单编号</th><th>公司</th><th>总金额</th><th>状态</th><th>结款到期日</th></tr>
+        </thead>
+        <tbody>
+            {% for o in orders %}
+            <tr>
+                <td>{{ o.order_no }}</td><td>{{ o.company_name }}</td><td>{{ o.total_amount }}</td>
+                <td><span class="badge bg-{% if o.status == 'anomaly' %}warning{% else %}success{% endif %}">{{ o.status }}</span></td>
+                <td>{{ o.payment_due_date }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted">暂无欠款</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
