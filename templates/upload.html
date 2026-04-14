@@ -1,27 +1,47 @@
 {% extends "base.html" %}
-{% block title %}数据导入{% endblock %}
+
+{% block title %}数据上传 - 北京法拉信息同步系统{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">📤 数据导入</h2>
-<div class="card" style="max-width:600px">
+<div class="card">
+    <div class="card-header"><i class="bi bi-cloud-upload"></i> 数据上传</div>
     <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label class="form-label">表类型 *</label>
+        <form method="POST" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">选择数据表类型</label>
                 <select name="table_type" class="form-select" required>
-                    <option value="">请选择</option>
-                    <option value="delivery_schedule">交期表（日更）</option>
-                    <option value="shipment">发货表（日更）</option>
-                    <option value="invoice_factory">开票表1-工厂侧（月更）</option>
-                    <option value="invoice_customer">开票表2-客户侧（月更）</option>
-                    <option value="company">公司明细表（不定期）</option>
+                    <option value="">-- 请选择 --</option>
+                    {% for key, label in table_labels.items() %}
+                    <option value="{{ key }}">{{ label }}</option>
+                    {% endfor %}
                 </select>
             </div>
-            <div class="mb-3">
-                <label class="form-label">选择文件 *（.xlsx / .xls）</label>
+            <div class="col-md-5">
+                <label class="form-label">选择Excel文件</label>
                 <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
             </div>
-            <button type="submit" class="btn btn-primary">上传导入</button>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-upload"></i> 上传导入</button>
+            </div>
         </form>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 上传说明</div>
+    <div class="card-body">
+        <table class="table table-sm table-bordered mb-0">
+            <thead class="table-light">
+                <tr><th>数据表</th><th>更新频率</th><th>数据来源</th><th>Excel表头要求</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>交期表</td><td>日更</td><td>工厂</td><td>MRP控制者、销售订单号、客户名称、法拉外码等19个字段</td></tr>
+                <tr><td>发货表</td><td>日更简版</td><td>工厂</td><td>送货单号、客户名称、物料名称等14个字段</td></tr>
+                <tr><td>公司开票表</td><td>月更</td><td>工厂</td><td>售达方客户代码名称、销售订单号等16个字段</td></tr>
+                <tr><td>客户开票表</td><td>月更</td><td>给客户</td><td>指定地点、订单号、含税单价等8个字段</td></tr>
+                <tr><td>公司明细表</td><td>不定期</td><td>手动</td><td>公司名称、收货地址、负责人等6个字段</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

@@ -1,51 +1,35 @@
-import os
-from flask import Flask, render_template
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from config import Config
-from db.database import init_db
+
+db = SQLAlchemy()
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
-    # 确保目录存在
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs(os.path.join(os.path.dirname(__file__), 'db', 'data'), exist_ok=True)
+    db.init_app(app)
 
-    # 初始化数据库
-    init_db(app)
+    with app.app_context():
+        from models import (DeliverySchedule, Shipment, FactoryInvoice,
+                            CustomerInvoice, Company, Order, OrderLog, SystemLog)
+        db.create_all()
 
-    # 注册蓝图
-    from routes.order_routes import bp as order_bp
-    from routes.upload_routes import bp as upload_bp
-    from routes.analysis_routes import bp as analysis_bp
-    from routes.company_routes import bp as company_bp
-    from routes.master_routes import bp as master_bp
+    from routes.dashboard import dashboard_bp
+    from routes.order import order_bp
+    from routes.upload import upload_bp
+    from routes.anomaly import anomaly_bp
+    from routes.reminder_route import reminder_bp
+    from routes.analysis import analysis_bp
+    from routes.company import company_bp
 
-    app.register_blueprint(order_bp)
-    app.register_blueprint(upload_bp)
-    app.register_blueprint(analysis_bp)
-    app.register_blueprint(company_bp)
-    app.register_blueprint(master_bp)
-
-    # 首页
-    @app.route('/')
-    def index():
-        from models.order import Order, OrderStatus
-        from services.reminder_service import get_all_reminders
-        stats = {
-            'total': Order.query.count(),
-            'normal': Order.query.filter_by(status=OrderStatus.NORMAL).count(),
-            'anomaly': Order.query.filter_by(status=OrderStatus.ANOMALY).count(),
-            'completed': Order.query.filter_by(status=OrderStatus.COMPLETED).count(),
-        }
-        reminders = get_all_reminders()
-        return render_template('index.html', stats=stats, reminders=reminders)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(order_bp, url_prefix='/order')
+    app.register_blueprint(upload_bp, url_prefix='/upload')
+    app.register_blueprint(anomaly_bp, url_prefix='/anomaly')
+    app.register_blueprint(reminder_bp, url_prefix='/reminder')
+    app.register_blueprint(analysis_bp, url_prefix='/analysis')
+    app.register_blueprint(company_bp, url_prefix='/company')
 
     return app
-
-
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True, host='0.0.0.0', port=5000)

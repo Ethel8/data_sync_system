@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 北京法拉信息同步系统{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.total_orders }}</h5>
+                <p class="card-text mb-0">总订单数</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.normal_orders }}</h5>
+                <p class="card-text mb-0">正常订单</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.anomaly_orders }}</h5>
+                <p class="card-text mb-0">异常订单</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.completed_orders }}</h5>
+                <p class="card-text mb-0">已完结</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-secondary">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.returned_orders }}</h5>
+                <p class="card-text mb-0">退单</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ stats.delivery_count }}</h5>
+                <p class="card-text mb-0">交期表记录</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning"></i> 快捷操作</div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('order.create') }}" class="btn btn-outline-primary"><i class="bi bi-plus-circle"></i> 创建订单</a>
+                    <a href="{{ url_for('upload.index') }}" class="btn btn-outline-success"><i class="bi bi-cloud-upload"></i> 上传数据</a>
+                    <a href="{{ url_for('anomaly.list_anomalies') }}" class="btn btn-outline-danger"><i class="bi bi-exclamation-triangle"></i> 异常管理</a>
+                    <a href="{{ url_for('reminder.index') }}" class="btn btn-outline-warning"><i class="bi bi-bell"></i> 到期提醒</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> 统计分析</div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('analysis.reconciliation') }}" class="btn btn-outline-info"><i class="bi bi-receipt"></i> 对账表</a>
+                    <a href="{{ url_for('analysis.arrears') }}" class="btn btn-outline-info"><i class="bi bi-cash-coin"></i> 欠款表</a>
+                    <a href="{{ url_for('company.list_companies') }}" class="btn btn-outline-secondary"><i class="bi bi-building"></i> 公司管理</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

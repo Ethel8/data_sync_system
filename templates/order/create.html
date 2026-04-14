@@ -1,54 +1,62 @@
 {% extends "base.html" %}
-{% block title %}创建订单{% endblock %}
+
+{% block title %}创建订单 - 北京法拉信息同步系统{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">➕ 创建订单</h2>
-<div class="card" style="max-width:600px">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>创建订单</h5>
+    <a href="{{ url_for('order.list_orders') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 说明</div>
     <div class="card-body">
-        <p class="text-muted">订单创建通常通过导入交期表自动完成。如需手动创建，请填写以下信息。</p>
-        <form method="post" action="">
-            <div class="mb-3">
-                <label class="form-label">订单编号 *</label>
-                <input type="text" name="order_no" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">公司</label>
-                <select name="company_id" class="form-select">
-                    <option value="">请选择</option>
-                    {% for c in companies %}
-                    <option value="{{ c.id }}">{{ c.name }}</option>
+        <p class="mb-0">基于交期表记录创建新订单。请选择一条交期表记录后点击"创建订单"。</p>
+    </div>
+</div>
+
+{% if schedules %}
+<div class="card">
+    <div class="card-header"><i class="bi bi-list-ul"></i> 可创建订单的交期表记录</div>
+    <div class="card-body table-responsive">
+        <form method="POST">
+            <table class="table table-sm table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>选择</th>
+                        <th>销售订单号</th>
+                        <th>客户名称</th>
+                        <th>法拉外码</th>
+                        <th>订单数量</th>
+                        <th>客户要求交期</th>
+                        <th>订单评审交期</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ds in schedules %}
+                    <tr>
+                        <td><input type="radio" name="delivery_schedule_id" value="{{ ds.id }}" required></td>
+                        <td>{{ ds.sales_order_no or '-' }}</td>
+                        <td>{{ ds.customer_name or '-' }}</td>
+                        <td>{{ ds.fara_external_code or '-' }}</td>
+                        <td>{{ ds.order_quantity or '-' }}</td>
+                        <td>{{ ds.customer_required_date or '-' }}</td>
+                        <td>{{ ds.order_review_date or '-' }}</td>
+                    </tr>
                     {% endfor %}
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">产品名称</label>
-                <input type="text" name="product_name" class="form-control">
-            </div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">数量</label>
-                    <input type="number" name="quantity" class="form-control" step="any">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">单价</label>
-                    <input type="number" name="unit_price" class="form-control" step="any">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">总金额</label>
-                    <input type="number" name="total_amount" class="form-control" step="any">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">交付日期</label>
-                    <input type="date" name="delivery_date" class="form-control">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">结款到期日</label>
-                    <input type="date" name="payment_due_date" class="form-control">
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">创建</button>
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle"></i> 创建订单</button>
         </form>
     </div>
 </div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted">
+        <i class="bi bi-inbox fs-1"></i>
+        <p class="mt-2">没有可创建订单的交期表记录。请先上传交期表数据。</p>
+        <a href="{{ url_for('upload.index') }}" class="btn btn-outline-primary">去上传</a>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

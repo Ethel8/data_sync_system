@@ -1,0 +1,16 @@
+/* 自定义样式 */
+body {
+    font-size: 14px;
+}
+.card {
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+}
+.navbar-brand {
+    font-weight: 600;
+}
+.table th {
+    white-space: nowrap;
+}
+.badge {
+    font-weight: 500;
+}

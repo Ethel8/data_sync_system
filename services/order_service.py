@@ -1,81 +1,65 @@
-from db.database import db
-from models.order import Order, OrderStatus
-from models.log import OperationLog
-from datetime import datetime
+from app import db
+from models import Order, OrderLog, DeliverySchedule
 
 
-def create_order(**kwargs):
-    """创建订单"""
-    order = Order(**kwargs)
-    order.status = OrderStatus.NORMAL
-    db.session.add(order)
-    db.session.flush()
+class OrderService:
+    """订单业务服务"""
 
-    _add_log(order.id, 'create', new_value=OrderStatus.NORMAL, remark='订单创建')
-    db.session.commit()
-    return order
+    # 一级状态 -> 合法的二级状态
+    VALID_SECONDARY_STATUSES = {
+        '正常': [
+            '生产中', '待提货', '部分发货', '待结款', '已结款',
+            '工厂未开票', '工厂部分开票', '工厂已开票', '工厂需退票',
+            '法拉未开票', '法拉部分开票', '法拉已开票', '法拉需退票',
+        ],
+        '异常': ['超时未提货', '超时未结款', '入库后退货', '开票后退货'],
+        '完结': [],
+        '退单': [],
+    }
 
-
-def get_order(order_id):
-    return Order.query.get_or_404(order_id)
-
-
-def list_orders(status=None, company_id=None, keyword=None, page=1, per_page=20):
-    """订单列表查询，支持筛选和分页"""
-    query = Order.query
-    if status:
-        query = query.filter_by(status=status)
-    if company_id:
-        query = query.filter_by(company_id=company_id)
-    if keyword:
-        query = query.filter(
-            Order.order_no.contains(keyword) |
-            Order.customer_material_code.contains(keyword) |
-            Order.falah_code.contains(keyword)
+    @staticmethod
+    def create_order(delivery_schedule_id):
+        """基于交期表创建订单"""
+        ds = DeliverySchedule.query.get(delivery_schedule_id)
+        if not ds:
+            return None, '交期表记录不存在'
+        order = Order(
+            delivery_schedule_id=delivery_schedule_id,
+            primary_status='正常',
+            secondary_status='生产中',
         )
-    # 关联公司名称搜索
-    if keyword:
-        from models.company import Company
-        company_ids = [c.id for c in Company.query.filter(Company.name.contains(keyword)).all()]
-        if company_ids:
-            query = query.filter((Order.company_id.in_(company_ids)) if not hasattr(query, '_joinpoint') else Order.company_id.in_(company_ids))
-    query = query.order_by(Order.created_at.desc())
-    return query.paginate(page=page, per_page=per_page, error_out=False)
+        db.session.add(order)
+        db.session.commit()
+        OrderService._log(order.id, None, '正常/生产中', '创建订单')
+        return order, None
 
+    @staticmethod
+    def update_status(order_id, primary_status, secondary_status, remark=''):
+        """更新订单状态"""
+        order = Order.query.get(order_id)
+        if not order:
+            return None, '订单不存在'
 
-def update_status(order_id, new_status, remark=''):
-    """更新订单状态"""
-    order = get_order(order_id)
-    old_status = order.status
-    order.status = new_status
-    order.updated_at = datetime.now()
+        old_status = f'{order.primary_status}/{order.secondary_status}'
+        new_status = f'{primary_status}/{secondary_status}'
 
-    if new_status == OrderStatus.COMPLETED:
-        order.completed_at = datetime.now()
+        if primary_status in OrderService.VALID_SECONDARY_STATUSES:
+            if secondary_status and secondary_status not in OrderService.VALID_SECONDARY_STATUSES[primary_status]:
+                return None, f'无效的二级状态: {secondary_status}，一级状态为{primary_status}时允许: {OrderService.VALID_SECONDARY_STATUSES[primary_status]}'
 
-    _add_log(order.id, 'update_status', old_value=old_status, new_value=new_status, remark=remark)
-    db.session.commit()
-    return order
+        order.primary_status = primary_status
+        order.secondary_status = secondary_status
+        db.session.commit()
+        OrderService._log(order.id, old_status, new_status, remark)
+        return order, None
 
-
-def complete_order(order_id, remark=''):
-    return update_status(order_id, OrderStatus.COMPLETED, remark or '订单完结入库')
-
-
-def set_anomaly(order_id, remark=''):
-    return update_status(order_id, OrderStatus.ANOMALY, remark or '订单异常')
-
-
-def refund_order(order_id, remark=''):
-    return update_status(order_id, OrderStatus.REFUNDED, remark or '订单退单')
-
-
-def _add_log(order_id, action, old_value=None, new_value=None, remark=''):
-    log = OperationLog(
-        order_id=order_id,
-        action=action,
-        old_value=old_value,
-        new_value=new_value,
-        remark=remark,
-    )
-    db.session.add(log)
+    @staticmethod
+    def _log(order_id, from_status, to_status, remark=''):
+        log = OrderLog(
+            order_id=order_id,
+            from_status=from_status,
+            to_status=to_status,
+            remark=remark,
+        )
+        db.session.add(log)
+        db.session.commit()

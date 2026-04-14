@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}到期提醒 - 北京法拉信息同步系统{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-truck"></i> 待提货提醒</span>
+                <span class="badge bg-warning">{{ pickup_reminders|length }}</span>
+            </div>
+            <div class="card-body table-responsive">
+                {% if pickup_reminders %}
+                <table class="table table-sm table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr><th>订单号</th><th>客户</th><th>要求交期</th><th>状态</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order in pickup_reminders %}
+                        <tr>
+                            <td>{{ order.delivery_schedule.sales_order_no if order.delivery_schedule else '-' }}</td>
+                            <td>{{ order.delivery_schedule.customer_name if order.delivery_schedule else '-' }}</td>
+                            <td>{{ order.delivery_schedule.customer_required_date if order.delivery_schedule else '-' }}</td>
+                            <td><span class="badge bg-warning text-dark">{{ order.secondary_status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-muted my-4"><i class="bi bi-check-circle"></i> 暂无待提货提醒</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cash"></i> 待结款提醒</span>
+                <span class="badge bg-danger">{{ payment_reminders|length }}</span>
+            </div>
+            <div class="card-body table-responsive">
+                {% if payment_reminders %}
+                <table class="table table-sm table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr><th>订单号</th><th>客户</th><th>状态</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for order in payment_reminders %}
+                        <tr>
+                            <td>{{ order.delivery_schedule.sales_order_no if order.delivery_schedule else '-' }}</td>
+                            <td>{{ order.delivery_schedule.customer_name if order.delivery_schedule else '-' }}</td>
+                            <td><span class="badge bg-danger">{{ order.secondary_status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-muted my-4"><i class="bi bi-check-circle"></i> 暂无待结款提醒</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
