@@ -1,117 +1,143 @@
 {% extends "base.html" %}
 
-{% block title %}订单查询 - 北京法拉信息同步系统{% endblock %}
+{% block title %}订单管理{% endblock %}
 
 {% block content %}
-<div class="card mb-3">
-    <div class="card-header"><i class="bi bi-search"></i> 订单查询</div>
-    <div class="card-body">
-        <form method="GET" class="row g-2">
-            <div class="col-md-3">
-                <select name="primary_status" class="form-select form-select-sm">
-                    <option value="">全部一级状态</option>
-                    <option value="正常" {% if primary_status == '正常' %}selected{% endif %}>正常</option>
-                    <option value="异常" {% if primary_status == '异常' %}selected{% endif %}>异常</option>
-                    <option value="完结" {% if primary_status == '完结' %}selected{% endif %}>完结</option>
-                    <option value="退单" {% if primary_status == '退单' %}selected{% endif %}>退单</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select name="secondary_status" class="form-select form-select-sm">
-                    <option value="">全部二级状态</option>
-                    <option value="生产中" {% if secondary_status == '生产中' %}selected{% endif %}>生产中</option>
-                    <option value="待提货" {% if secondary_status == '待提货' %}selected{% endif %}>待提货</option>
-                    <option value="部分发货" {% if secondary_status == '部分发货' %}selected{% endif %}>部分发货</option>
-                    <option value="待结款" {% if secondary_status == '待结款' %}selected{% endif %}>待结款</option>
-                    <option value="已结款" {% if secondary_status == '已结款' %}selected{% endif %}>已结款</option>
-                    <option value="超时未提货" {% if secondary_status == '超时未提货' %}selected{% endif %}>超时未提货</option>
-                    <option value="超时未结款" {% if secondary_status == '超时未结款' %}selected{% endif %}>超时未结款</option>
-                    <option value="入库后退货" {% if secondary_status == '入库后退货' %}selected{% endif %}>入库后退货</option>
-                    <option value="开票后退货" {% if secondary_status == '开票后退货' %}selected{% endif %}>开票后退货</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select name="search_field" class="form-select form-select-sm">
-                    <option value="sales_order_no" {% if search_field == 'sales_order_no' %}selected{% endif %}>订单号</option>
-                    <option value="customer_name" {% if search_field == 'customer_name' %}selected{% endif %}>客户名称</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索关键词..." value="{{ keyword }}">
-            </div>
-            <div class="col-md-1">
-                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i></button>
-            </div>
-        </form>
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>📋 订单管理</h4>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm" id="filter_status" style="width:120px" onchange="applyFilter()">
+                <option value="">全部状态</option>
+                <option value="正常" {% if request.args.status == '正常' %}selected{% endif %}>正常</option>
+                <option value="异常" {% if request.args.status == '异常' %}selected{% endif %}>异常</option>
+                <option value="完结" {% if request.args.status == '完结' %}selected{% endif %}>完结</option>
+                <option value="退单" {% if request.args.status == '退单' %}selected{% endif %}>退单</option>
+            </select>
+            <select class="form-select form-select-sm" id="filter_progress" style="width:140px" onchange="applyFilter()">
+                <option value="">全部进度</option>
+                <option value="生产中">生产中</option>
+                <option value="待提货">待提货</option>
+                <option value="部分发货">部分发货</option>
+                <option value="待结款">待结款</option>
+                <option value="已结款">已结款</option>
+                <option value="超时未提货">超时未提货</option>
+                <option value="超时未结款">超时未结款</option>
+            </select>
+            <input type="text" class="form-control form-control-sm" id="filter_keyword" placeholder="搜索订单号/客户..." value="{{ request.args.keyword }}" style="width:180px">
+            <button class="btn btn-sm btn-primary" onclick="applyFilter()">搜索</button>
+        </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body table-responsive">
-        <table class="table table-sm table-hover table-bordered">
-            <thead class="table-light">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
                     <th>销售订单号</th>
-                    <th>客户名称</th>
-                    <th>一级状态</th>
-                    <th>二级状态</th>
-                    <th>创建时间</th>
+                    <th>送达方</th>
+                    <th>法拉外码</th>
+                    <th>订单数量</th>
+                    <th>已发货</th>
+                    <th>订单进度</th>
+                    <th>公司开票</th>
+                    <th>客户开票</th>
+                    <th>订单状态</th>
+                    <th>负责人</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody>
-                {% for order in orders.items %}
+                {% for order in orders %}
                 <tr>
-                    <td>{{ order.id }}</td>
-                    <td>{{ order.delivery_schedule.sales_order_no if order.delivery_schedule else '-' }}</td>
-                    <td>{{ order.delivery_schedule.customer_name if order.delivery_schedule else '-' }}</td>
+                    <td><a href="{{ url_for('order.order_detail', order_id=order.id) }}">{{ order.sales_order_no }}</a></td>
+                    <td>{{ order.ship_to_name }}</td>
+                    <td>{{ order.fara_external_code }}</td>
+                    <td>{{ order.order_quantity or 0 }}</td>
+                    <td>{{ order.shipped_quantity or 0 }}</td>
                     <td>
-                        {% if order.primary_status == '正常' %}
-                            <span class="badge bg-success">{{ order.primary_status }}</span>
-                        {% elif order.primary_status == '异常' %}
-                            <span class="badge bg-danger">{{ order.primary_status }}</span>
-                        {% elif order.primary_status == '完结' %}
-                            <span class="badge bg-info">{{ order.primary_status }}</span>
+                        {% if order.order_progress in ['超时未提货', '超时未结款', '入库后退货', '开票后退货'] %}
+                        <span class="badge bg-danger">{{ order.order_progress }}</span>
+                        {% elif order.order_progress == '已结款' %}
+                        <span class="badge bg-info">{{ order.order_progress }}</span>
+                        {% elif order.order_progress == '待结款' %}
+                        <span class="badge bg-warning text-dark">{{ order.order_progress }}</span>
                         {% else %}
-                            <span class="badge bg-secondary">{{ order.primary_status }}</span>
+                        <span class="badge bg-secondary">{{ order.order_progress }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ order.secondary_status or '-' }}</td>
-                    <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '-' }}</td>
                     <td>
-                        <a href="{{ url_for('order.detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye"></i> 详情
-                        </a>
+                        {% if order.factory_invoice_status == '已开票' %}
+                        <span class="badge bg-success">{{ order.factory_invoice_status }}</span>
+                        {% elif order.factory_invoice_status == '需退票' %}
+                        <span class="badge bg-danger">{{ order.factory_invoice_status }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ order.factory_invoice_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.customer_invoice_status == '已开票' %}
+                        <span class="badge bg-success">{{ order.customer_invoice_status }}</span>
+                        {% elif order.customer_invoice_status == '需退票' %}
+                        <span class="badge bg-danger">{{ order.customer_invoice_status }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ order.customer_invoice_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.order_status == '正常' %}
+                        <span class="badge bg-success">{{ order.order_status }}</span>
+                        {% elif order.order_status == '异常' %}
+                        <span class="badge bg-danger">{{ order.order_status }}</span>
+                        {% elif order.order_status == '完结' %}
+                        <span class="badge bg-info">{{ order.order_status }}</span>
+                        {% elif order.order_status == '退单' %}
+                        <span class="badge bg-secondary">{{ order.order_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ order.manager or '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('order.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">详情</a>
                     </td>
                 </tr>
-                {% else %}
-                <tr><td colspan="7" class="text-center text-muted">暂无订单数据</td></tr>
                 {% endfor %}
             </tbody>
         </table>
-
-        {% if orders.pages > 1 %}
-        <nav>
-            <ul class="pagination pagination-sm justify-content-center">
-                {% if orders.has_prev %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('order.list_orders', page=orders.prev_num, primary_status=primary_status, secondary_status=secondary_status, keyword=keyword, search_field=search_field) }}">上一页</a></li>
-                {% endif %}
-                {% for p in orders.iter_pages() %}
-                    {% if p %}
-                        <li class="page-item {% if p == orders.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('order.list_orders', page=p, primary_status=primary_status, secondary_status=secondary_status, keyword=keyword, search_field=search_field) }}">{{ p }}</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
-                {% endfor %}
-                {% if orders.has_next %}
-                <li class="page-item"><a class="page-link" href="{{ url_for('order.list_orders', page=orders.next_num, primary_status=primary_status, secondary_status=secondary_status, keyword=keyword, search_field=search_field) }}">下一页</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
     </div>
+
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('order.list_orders', page=pagination.prev_num, status=request.args.status, progress=request.args.progress, keyword=request.args.keyword) }}">上一页</a></li>
+            {% endif %}
+            {% for p in pagination.iter_pages() %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('order.list_orders', page=p, status=request.args.status, progress=request.args.progress, keyword=request.args.keyword) }}">{{ p }}</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('order.list_orders', page=pagination.next_num, status=request.args.status, progress=request.args.progress, keyword=request.args.keyword) }}">下一页</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyFilter() {
+    const status = document.getElementById('filter_status').value;
+    const progress = document.getElementById('filter_progress').value;
+    const keyword = document.getElementById('filter_keyword').value;
+    let url = '{{ url_for("order.list_orders") }}?';
+    if (status) url += 'status=' + encodeURIComponent(status) + '&';
+    if (progress) url += 'progress=' + encodeURIComponent(progress) + '&';
+    if (keyword) url += 'keyword=' + encodeURIComponent(keyword);
+    window.location.href = url;
+}
+</script>
 {% endblock %}

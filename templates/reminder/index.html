@@ -1,64 +1,126 @@
 {% extends "base.html" %}
 
-{% block title %}到期提醒 - 北京法拉信息同步系统{% endblock %}
+{% block title %}到期提醒{% endblock %}
 
 {% block content %}
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-truck"></i> 待提货提醒</span>
-                <span class="badge bg-warning">{{ pickup_reminders|length }}</span>
-            </div>
-            <div class="card-body table-responsive">
-                {% if pickup_reminders %}
-                <table class="table table-sm table-hover table-bordered">
-                    <thead class="table-light">
-                        <tr><th>订单号</th><th>客户</th><th>要求交期</th><th>状态</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for order in pickup_reminders %}
-                        <tr>
-                            <td>{{ order.delivery_schedule.sales_order_no if order.delivery_schedule else '-' }}</td>
-                            <td>{{ order.delivery_schedule.customer_name if order.delivery_schedule else '-' }}</td>
-                            <td>{{ order.delivery_schedule.customer_required_date if order.delivery_schedule else '-' }}</td>
-                            <td><span class="badge bg-warning text-dark">{{ order.secondary_status }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-center text-muted my-4"><i class="bi bi-check-circle"></i> 暂无待提货提醒</p>
-                {% endif %}
+<div class="container-fluid py-3">
+    <h4 class="mb-4">🔔 到期提醒</h4>
+
+    <div class="row g-4">
+        <!-- 提醒提货 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">📦 提醒提货（{{ pickup_reminders|length }}）</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if pickup_reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light"><tr><th>订单号</th><th>送达方</th><th>评审交期</th></tr></thead>
+                            <tbody>
+                                {% for r in pickup_reminders %}
+                                <tr>
+                                    <td><a href="{{ url_for('order.order_detail', order_id=r.order.id) }}">{{ r.order.sales_order_no }}</a></td>
+                                    <td>{{ r.order.ship_to_name }}</td>
+                                    <td>{{ r.review_date }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted p-4">暂无待提货提醒</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-cash"></i> 待结款提醒</span>
-                <span class="badge bg-danger">{{ payment_reminders|length }}</span>
+        <!-- 提醒结款 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">💰 提醒结款（{{ payment_reminders|length }}）</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if payment_reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light"><tr><th>订单号</th><th>送达方</th><th>发货日期</th><th>应付金额</th></tr></thead>
+                            <tbody>
+                                {% for r in payment_reminders %}
+                                <tr>
+                                    <td><a href="{{ url_for('order.order_detail', order_id=r.order.id) }}">{{ r.order.sales_order_no }}</a></td>
+                                    <td>{{ r.order.ship_to_name }}</td>
+                                    <td>{{ r.ship_date }}</td>
+                                    <td class="text-danger fw-bold">{{ r.order.customer_payable_incl_tax or 0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted p-4">暂无待结款提醒</div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body table-responsive">
-                {% if payment_reminders %}
-                <table class="table table-sm table-hover table-bordered">
-                    <thead class="table-light">
-                        <tr><th>订单号</th><th>客户</th><th>状态</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for order in payment_reminders %}
-                        <tr>
-                            <td>{{ order.delivery_schedule.sales_order_no if order.delivery_schedule else '-' }}</td>
-                            <td>{{ order.delivery_schedule.customer_name if order.delivery_schedule else '-' }}</td>
-                            <td><span class="badge bg-danger">{{ order.secondary_status }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p class="text-center text-muted my-4"><i class="bi bi-check-circle"></i> 暂无待结款提醒</p>
-                {% endif %}
+        </div>
+
+        <!-- 提醒公司开票 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📄 提醒公司开票（{{ factory_invoice_reminders|length }}）</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if factory_invoice_reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light"><tr><th>订单号</th><th>送达方</th><th>开票状态</th></tr></thead>
+                            <tbody>
+                                {% for o in factory_invoice_reminders %}
+                                <tr>
+                                    <td><a href="{{ url_for('order.order_detail', order_id=o.id) }}">{{ o.sales_order_no }}</a></td>
+                                    <td>{{ o.ship_to_name }}</td>
+                                    <td><span class="badge bg-warning text-dark">{{ o.factory_invoice_status }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted p-4">暂无公司开票提醒</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 提醒客户开票 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📋 提醒客户开票（{{ customer_invoice_reminders|length }}）</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if customer_invoice_reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light"><tr><th>订单号</th><th>送达方</th><th>开票状态</th></tr></thead>
+                            <tbody>
+                                {% for o in customer_invoice_reminders %}
+                                <tr>
+                                    <td><a href="{{ url_for('order.order_detail', order_id=o.id) }}">{{ o.sales_order_no }}</a></td>
+                                    <td>{{ o.ship_to_name }}</td>
+                                    <td><span class="badge bg-warning text-dark">{{ o.customer_invoice_status }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted p-4">暂无客户开票提醒</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

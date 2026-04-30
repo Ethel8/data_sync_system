@@ -1,47 +1,119 @@
 {% extends "base.html" %}
 
-{% block title %}数据上传 - 北京法拉信息同步系统{% endblock %}
+{% block title %}数据上传{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header"><i class="bi bi-cloud-upload"></i> 数据上传</div>
-    <div class="card-body">
-        <form method="POST" enctype="multipart/form-data" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">选择数据表类型</label>
-                <select name="table_type" class="form-select" required>
-                    <option value="">-- 请选择 --</option>
-                    {% for key, label in table_labels.items() %}
-                    <option value="{{ key }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-5">
-                <label class="form-label">选择Excel文件</label>
-                <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-upload"></i> 上传导入</button>
-            </div>
-        </form>
-    </div>
-</div>
+<div class="container-fluid py-3">
+    <h4 class="mb-4">📤 数据上传</h4>
 
-<div class="card mt-3">
-    <div class="card-header"><i class="bi bi-info-circle"></i> 上传说明</div>
-    <div class="card-body">
-        <table class="table table-sm table-bordered mb-0">
-            <thead class="table-light">
-                <tr><th>数据表</th><th>更新频率</th><th>数据来源</th><th>Excel表头要求</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>交期表</td><td>日更</td><td>工厂</td><td>MRP控制者、销售订单号、客户名称、法拉外码等19个字段</td></tr>
-                <tr><td>发货表</td><td>日更简版</td><td>工厂</td><td>送货单号、客户名称、物料名称等14个字段</td></tr>
-                <tr><td>公司开票表</td><td>月更</td><td>工厂</td><td>售达方客户代码名称、销售订单号等16个字段</td></tr>
-                <tr><td>客户开票表</td><td>月更</td><td>给客户</td><td>指定地点、订单号、含税单价等8个字段</td></tr>
-                <tr><td>公司明细表</td><td>不定期</td><td>手动</td><td>公司名称、收货地址、负责人等6个字段</td></tr>
-            </tbody>
-        </table>
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">上传文件</h5></div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">数据表类型</label>
+                            <select class="form-select" id="table_type">
+                                <option value="delivery_schedule">交期表（日更）</option>
+                                <option value="shipment">发货表（日更）</option>
+                                <option value="factory_invoice">公司开票表（月更）</option>
+                                <option value="customer_invoice">客户开票表（月更）</option>
+                                <option value="company">客户明细表（不定期）</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">选择 Excel 文件</label>
+                            <input type="file" class="form-control" id="file_input" accept=".xlsx,.xls">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" id="upload_btn">
+                                <i class="bi bi-cloud-upload"></i> 上传
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 进度 -->
+                    <div id="progress_area" class="d-none">
+                        <div class="progress mb-2">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%">处理中...</div>
+                        </div>
+                    </div>
+
+                    <!-- 结果 -->
+                    <div id="result_area" class="d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header"><h5 class="mb-0">上传说明</h5></div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>数据表</th><th>频率</th><th>来源</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>交期表</td><td><span class="badge bg-primary">日更</span></td><td>工厂</td></tr>
+                            <tr><td>发货表</td><td><span class="badge bg-primary">日更</span></td><td>工厂</td></tr>
+                            <tr><td>公司开票表</td><td><span class="badge bg-info">月更</span></td><td>工厂</td></tr>
+                            <tr><td>客户开票表</td><td><span class="badge bg-info">月更</span></td><td>销售</td></tr>
+                            <tr><td>客户明细表</td><td><span class="badge bg-secondary">不定期</span></td><td>销售</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('upload_btn').addEventListener('click', function() {
+    const tableType = document.getElementById('table_type').value;
+    const fileInput = document.getElementById('file_input');
+    const file = fileInput.files[0];
+
+    if (!file) { alert('请选择文件'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    document.getElementById('progress_area').classList.remove('d-none');
+    document.getElementById('result_area').classList.add('d-none');
+
+    fetch('/upload/' + tableType, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('progress_area').classList.add('d-none');
+        const area = document.getElementById('result_area');
+        area.classList.remove('d-none');
+
+        if (data.success && data.data) {
+            const d = data.data;
+            let html = '<div class="alert alert-success">';
+            html += `<strong>上传成功！</strong> 成功导入 <b>${d.success_count}</b> 条记录`;
+            if (d.errors && d.errors.length > 0) {
+                html += '<hr><p class="mb-1 text-danger">错误信息：</p><ul class="mb-0">';
+                d.errors.forEach(e => html += `<li>${e}</li>`);
+                html += '</ul>';
+            }
+            html += '</div>';
+            area.innerHTML = html;
+        } else {
+            area.innerHTML = `<div class="alert alert-danger"><strong>上传失败：</strong>${data.error}</div>`;
+        }
+        fileInput.value = '';
+    })
+    .catch(err => {
+        document.getElementById('progress_area').classList.add('d-none');
+        alert('请求失败: ' + err);
+    });
+});
+</script>
 {% endblock %}

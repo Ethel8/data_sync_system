@@ -50,6 +50,11 @@
                             <i class="bi bi-bell"></i> 到期提醒
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'payment.' in request.endpoint %}active{% endif %}" href="{{ url_for('payment.index') }}">
+                            <i class="bi bi-cash-coin"></i> 结款管理
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
