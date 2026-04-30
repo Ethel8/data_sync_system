@@ -1,35 +1,48 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import Company
+from flask import Blueprint, render_template, request, jsonify
 from app import db
+from models import Company
 
 company_bp = Blueprint('company', __name__)
 
 
-@company_bp.route('/')
+@company_bp.route('/', methods=['GET'])
 def list_companies():
-    keyword = request.args.get('keyword', '')
-    query = Company.query
-    if keyword:
-        query = query.filter(
-            db.or_(
-                Company.company_name.contains(keyword),
-                Company.manager.contains(keyword),
-                Company.contact_person.contains(keyword),
-            )
+    """客户明细列表"""
+    companies = Company.query.order_by(Company.ship_to_name).all()
+    return render_template('company/list.html', companies=companies)
+
+
+@company_bp.route('/', methods=['POST'])
+def create_or_update_company():
+    """新增或更新客户"""
+    data = request.get_json() or {}
+
+    if not data.get('ship_to_name'):
+        return jsonify({'success': False, 'error': '送达方名称不能为空'}), 400
+
+    existing = Company.query.filter_by(ship_to_name=data['ship_to_name']).first()
+    if existing:
+        for key in ['delivery_address', 'manager', 'contact_person', 'online_contact', 'phone']:
+            if key in data:
+                setattr(existing, key, data[key])
+        db.session.add(existing)
+        db.session.commit()
+        return jsonify({'success': True, 'message': '更新成功'})
+    else:
+        company = Company(
+            ship_to_name=data['ship_to_name'],
+            delivery_address=data.get('delivery_address', ''),
+            manager=data.get('manager', ''),
+            contact_person=data.get('contact_person', ''),
+            online_contact=data.get('online_contact', ''),
+            phone=data.get('phone', ''),
         )
-    companies = query.order_by(Company.company_name).all()
-    return render_template('company/list.html', companies=companies, keyword=keyword)
+        db.session.add(company)
+        db.session.commit()
 
+        # 更新订单主表负责人
+        from services.order_status_engine import update_all_orders_manager
+        update_all_orders_manager()
+        db.session.commit()
 
-@company_bp.route('/<int:company_id>/edit', methods=['POST'])
-def edit(company_id):
-    company = Company.query.get_or_404(company_id)
-    company.company_name = request.form.get('company_name', company.company_name)
-    company.shipping_address = request.form.get('shipping_address', company.shipping_address)
-    company.manager = request.form.get('manager', company.manager)
-    company.contact_person = request.form.get('contact_person', company.contact_person)
-    company.online_contact = request.form.get('online_contact', company.online_contact)
-    company.phone = request.form.get('phone', company.phone)
-    db.session.commit()
-    flash('公司信息更新成功', 'success')
-    return redirect(url_for('company.list_companies'))
+        return jsonify({'success': True, 'message': '创建成功'})
