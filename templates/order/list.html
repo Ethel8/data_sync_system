@@ -26,6 +26,7 @@
             </select>
             <input type="text" class="form-control form-control-sm" id="filter_keyword" placeholder="搜索订单号/客户..." value="{{ request.args.keyword }}" style="width:180px">
             <button class="btn btn-sm btn-primary" onclick="applyFilter()">搜索</button>
+            <a href="#" id="export_btn" class="btn btn-sm btn-success"><i class="bi bi-download"></i> 导出 Excel</a>
         </div>
     </div>
 
@@ -129,7 +130,24 @@
 
 {% block scripts %}
 <script>
-function applyFilter() {
+// 导出按钮
+const exportBtn = document.getElementById('export_btn');
+function updateExportUrl() {
+    const status = document.getElementById('filter_status').value;
+    const progress = document.getElementById('filter_progress').value;
+    const keyword = document.getElementById('filter_keyword').value;
+    let url = '{{ url_for("export.export_orders") }}?';
+    if (status) url += 'status=' + encodeURIComponent(status) + '&';
+    if (progress) url += 'progress=' + encodeURIComponent(progress) + '&';
+    if (keyword) url += 'keyword=' + encodeURIComponent(keyword);
+    exportBtn.href = url;
+}
+updateExportUrl();
+// 筛选条件变化时同步更新导出URL
+['filter_status', 'filter_progress', 'filter_keyword'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateExportUrl);
+});
+
     const status = document.getElementById('filter_status').value;
     const progress = document.getElementById('filter_progress').value;
     const keyword = document.getElementById('filter_keyword').value;

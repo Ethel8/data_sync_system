@@ -24,6 +24,7 @@ def create_app():
     from routes.analysis import analysis_bp
     from routes.company import company_bp
     from routes.payment import payment_bp
+    from routes.export import export_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(order_bp, url_prefix='/order')
@@ -33,5 +34,6 @@ def create_app():
     app.register_blueprint(analysis_bp, url_prefix='/analysis')
     app.register_blueprint(company_bp, url_prefix='/company')
     app.register_blueprint(payment_bp, url_prefix='/payment')
+    app.register_blueprint(export_bp, url_prefix='/export')
 
     return app
