@@ -23,6 +23,7 @@ def create_app():
     from routes.reminder import reminder_bp
     from routes.analysis import analysis_bp
     from routes.company import company_bp
+    from routes.payment import payment_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(order_bp, url_prefix='/order')
@@ -31,5 +32,6 @@ def create_app():
     app.register_blueprint(reminder_bp, url_prefix='/reminder')
     app.register_blueprint(analysis_bp, url_prefix='/analysis')
     app.register_blueprint(company_bp, url_prefix='/company')
+    app.register_blueprint(payment_bp, url_prefix='/payment')
 
     return app

@@ -1,8 +1,17 @@
 from flask import Blueprint, render_template
 from app import db
-from models import Order, DeliverySchedule
+from models import Order, DeliverySchedule, Company
 
 analysis_bp = Blueprint('analysis', __name__)
+
+
+def _safe_float(val):
+    if val is None:
+        return 0.0
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
 
 
 @analysis_bp.route('/reconciliation', methods=['GET'])
@@ -67,10 +76,14 @@ def arrears():
 
     items = []
     for row in results:
+        # 获取已结款未开票额度
+        company = Company.query.filter_by(ship_to_name=row.ship_to_name).first()
+        uninvoiced_paid = _safe_float(company.uninvoiced_paid) if company else 0.0
         items.append({
             'ship_to_name': row.ship_to_name,
             'total_arrears': round(row.total_arrears or 0, 2),
             'order_count': row.order_count,
+            'uninvoiced_paid': round(uninvoiced_paid, 2),
         })
 
     return render_template('analysis/arrears.html', items=items)

@@ -103,6 +103,7 @@ class Company(db.Model):
     contact_person = db.Column(db.String(100), comment='联系人')
     online_contact = db.Column(db.String(200), comment='线上联系方式')
     phone = db.Column(db.String(100), comment='电话')
+    uninvoiced_paid = db.Column(db.Float, default=0, comment='已结款未开票额度')
     upload_time = db.Column(db.DateTime, default=datetime.now, comment='更新时间')
 
 
